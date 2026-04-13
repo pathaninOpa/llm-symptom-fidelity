@@ -2,10 +2,10 @@
 LLM Symptom Fidelity Experiment
 ================================
 Study: "Testing the Simulated Patient: PHQ-9 and GAD-7 Fidelity in LLM-Driven Mental Health Personas"
-Author: Pathanin Opachalearn (JAIST KnowLab)
+Author: Tae (JAIST KnowLab)
 
 Experiment parameters:
-  - Models: GPT-4o (OpenAI), Llama 3.1 (Groq)
+  - Models: GPT-4o (OpenAI), Llama 3.3 - 70b versatile (Groq)
   - Vignettes: 8 (V1–V8)
   - Prompt conditions: standard, label_removed
   - Runs per cell: 3
@@ -439,10 +439,11 @@ def call_gpt4o(system_prompt: str, item_prompt: str) -> str:
     )
     return response.choices[0].message.content.strip()
 
-def call_llama31(system_prompt: str, item_prompt: str) -> str:
+def call_llama33(system_prompt: str, item_prompt: str) -> str:
     response = _groq_client().chat.completions.create(
         model="llama-3.3-70b-versatile",   # adjust if using a different Llama 3.3 variant
         temperature=0,
+        seed=42,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user",   "content": item_prompt},
@@ -453,7 +454,7 @@ def call_llama31(system_prompt: str, item_prompt: str) -> str:
 
 MODEL_CALLERS = {
     "gpt4o":   call_gpt4o,
-    "llama31": call_llama31,
+    "llama33": call_llama33,
 }
 
 # ── Response parser ───────────────────────────────────────────────────────────
@@ -485,11 +486,11 @@ def run_experiment(
     Args:
         output_path  : path to output CSV
         n_runs       : number of runs per cell (default 3)
-        models       : subset of ["gpt4o", "llama31"] to run; None = both
+        models       : subset of ["gpt4o", "llama33"] to run; None = both
         vignette_ids : subset of vignette keys to run; None = all
         dry_run      : if True, print prompts without calling APIs
     """
-    models        = models        or ["gpt4o", "llama31"]
+    models        = models        or ["gpt4o", "llama33"]
     vignette_ids  = vignette_ids  or list(VIGNETTES.keys())
     conditions    = ["standard", "label_removed"]
 
@@ -606,54 +607,80 @@ def analyze_results(csv_path: str = "results.csv"):
         print("No data found.")
         return
 
-    # Group: (vignette_id, model, prompt_condition, instrument) → list of (parsed, gt)
-    groups = defaultdict(list)
+    # Group: (vignette_id, model, prompt_condition, instrument, run_number) → list of (parsed, gt)
+    # Keyed by run so we can sum per-run totals correctly
+    run_groups = defaultdict(list)
     for r in rows:
-        key = (r["vignette_id"], r["model"], r["prompt_condition"], r["instrument"])
-        ps  = int(r["parsed_score"])    if r["parsed_score"]        not in ("", "None", None) else None
-        gt  = int(r["ground_truth_score"]) if r["ground_truth_score"] not in ("", "None", None) else None
-        groups[key].append((ps, gt))
+        key = (r["vignette_id"], r["model"], r["prompt_condition"],
+               r["instrument"], r["run_number"])
+        ps = int(r["parsed_score"])        if r["parsed_score"]        not in ("", "None", None) else None
+        gt = int(r["ground_truth_score"])  if r["ground_truth_score"]  not in ("", "None", None) else None
+        run_groups[key].append((ps, gt))
+
+    # Collapse to (vid, model, cond, inst) → list of per-run (llm_total, gt_total)
+    # Each run total = sum of item scores for that run
+    cell_runs = defaultdict(list)   # (vid, model, cond, inst) → [(llm_run_total, gt_run_total), ...]
+    for (vid, model, cond, inst, run), pairs in run_groups.items():
+        valid = [(ps, gt) for ps, gt in pairs if ps is not None and gt is not None]
+        if not valid:
+            continue
+        llm_run_total = sum(ps for ps, _ in valid)
+        gt_run_total  = sum(gt for _, gt in valid)
+        cell_runs[(vid, model, cond, inst)].append((llm_run_total, gt_run_total))
 
     print("\n" + "="*70)
     print("FIDELITY ANALYSIS")
     print("="*70)
 
-    # MAD per group
-    for (vid, model, cond, inst), pairs in sorted(groups.items()):
-        valid  = [(ps, gt) for ps, gt in pairs if ps is not None and gt is not None]
-        if not valid:
-            continue
-        mad = sum(abs(ps - gt) for ps, gt in valid) / len(valid)
-        llm_total = sum(ps for ps, _ in valid)
-        gt_total  = sum(gt for _, gt in valid)
-        llm_band  = score_to_band(llm_total, inst)
-        gt_band   = score_to_band(gt_total,  inst)
-        within_1  = bands_within_one(llm_band, gt_band, inst)
+    # MAD and severity band — averaged across runs
+    for (vid, model, cond, inst), run_totals in sorted(cell_runs.items()):
+        # MAD: average item-level deviation across all runs
+        all_pairs = []
+        for (vid2, model2, cond2, inst2, run), pairs in run_groups.items():
+            if (vid2, model2, cond2, inst2) == (vid, model, cond, inst):
+                all_pairs.extend([(ps, gt) for ps, gt in pairs
+                                  if ps is not None and gt is not None])
+        mad = sum(abs(ps - gt) for ps, gt in all_pairs) / len(all_pairs) if all_pairs else None
+
+        # Mean total score across runs for band assignment
+        mean_llm_total = sum(t[0] for t in run_totals) / len(run_totals)
+        mean_gt_total  = sum(t[1] for t in run_totals) / len(run_totals)
+        llm_band = score_to_band(round(mean_llm_total), inst)
+        gt_band  = score_to_band(round(mean_gt_total),  inst)
+        within_1 = bands_within_one(llm_band, gt_band, inst)
 
         print(f"\n{vid} | {model} | {cond} | {inst}")
-        print(f"  MAD: {mad:.3f}")
-        print(f"  LLM total: {llm_total} ({llm_band})  |  GT total: {gt_total} ({gt_band})")
+        print(f"  MAD: {mad:.3f}" if mad is not None else "  MAD: N/A")
+        print(f"  LLM mean total: {mean_llm_total:.1f} ({llm_band})  |  "
+              f"GT mean total: {mean_gt_total:.1f} ({gt_band})")
         print(f"  Within-one-band: {'PASS ✓' if within_1 else 'FAIL ✗'}")
 
-    # Bias detection: standard vs label_removed total score delta per (vid, model, inst)
+    # ── Bias detection ────────────────────────────────────────────────────────
+    # For each (vid, model, inst): compare mean run-total under standard vs label_removed
+    # Delta is on the instrument total scale (PHQ-9: 0–27, GAD-7: 0–21)
     print("\n" + "-"*70)
     print("BIAS DETECTION (standard vs label_removed divergence)")
+    print("Threshold: |Δ| ≥ 3 total-score points flags potential label bias")
     print("-"*70)
-    totals = defaultdict(lambda: {"standard": [], "label_removed": []})
-    for (vid, model, cond, inst), pairs in groups.items():
-        valid = [ps for ps, gt in pairs if ps is not None]
-        if valid:
-            totals[(vid, model, inst)][cond].extend(valid)
 
-    for (vid, model, inst), cond_scores in sorted(totals.items()):
-        std_scores = cond_scores.get("standard", [])
-        lbl_scores = cond_scores.get("label_removed", [])
-        if std_scores and lbl_scores:
-            std_mean = sum(std_scores) / len(std_scores)
-            lbl_mean = sum(lbl_scores) / len(lbl_scores)
-            delta = std_mean - lbl_mean
-            flag = "⚠️  LABEL BIAS" if abs(delta) >= 2 else "OK"
-            print(f"  {vid} | {model} | {inst}: Δ={delta:+.2f}  {flag}")
+    bias_data = defaultdict(lambda: {"standard": [], "label_removed": []})
+    for (vid, model, cond, inst), run_totals in cell_runs.items():
+        llm_run_totals = [t[0] for t in run_totals]
+        bias_data[(vid, model, inst)][cond].extend(llm_run_totals)
+
+    for (vid, model, inst), cond_totals in sorted(bias_data.items()):
+        std_totals = cond_totals.get("standard", [])
+        lbl_totals = cond_totals.get("label_removed", [])
+        if not std_totals or not lbl_totals:
+            continue
+        std_mean = sum(std_totals) / len(std_totals)
+        lbl_mean = sum(lbl_totals) / len(lbl_totals)
+        delta = std_mean - lbl_mean
+        # Threshold of 3 points on instrument total is meaningful:
+        # ~1 band boundary on PHQ-9 (bands span 5pts), proportionally similar on GAD-7
+        flag = "⚠️  LABEL BIAS" if abs(delta) >= 3 else "OK"
+        print(f"  {vid} | {model} | {inst}: "
+              f"std={std_mean:.1f}  lbl={lbl_mean:.1f}  Δ={delta:+.1f}  {flag}")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -663,7 +690,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LLM Symptom Fidelity Experiment")
     parser.add_argument("--output",    default="results.csv",    help="Output CSV path")
     parser.add_argument("--runs",      type=int, default=3,      help="Runs per cell")
-    parser.add_argument("--models",    nargs="+", default=None,  help="gpt4o llama31")
+    parser.add_argument("--models",    nargs="+", default=None,  help="gpt4o llama33")
     parser.add_argument("--vignettes", nargs="+", default=None,  help="V1 V2 ... V8")
     parser.add_argument("--dry-run",   action="store_true",      help="Print without calling APIs")
     parser.add_argument("--analyze",   action="store_true",      help="Run analysis on existing CSV")
