@@ -1,0 +1,681 @@
+"""
+LLM Symptom Fidelity Experiment
+================================
+Study: "Testing the Simulated Patient: PHQ-9 and GAD-7 Fidelity in LLM-Driven Mental Health Personas"
+Author: Pathanin Opachalearn (JAIST KnowLab)
+
+Experiment parameters:
+  - Models: GPT-4o (OpenAI), Llama 3.1 (Groq)
+  - Vignettes: 8 (V1–V8)
+  - Prompt conditions: standard, label_removed
+  - Runs per cell: 3
+  - Temperature: 0, seed=42 (GPT-4o)
+  - Total trials: 8 × 2 × 2 × 3 = 96 maximum
+
+Usage:
+  pip install openai groq
+  export OPENAI_API_KEY="sk-..."
+  export GROQ_API_KEY="gsk_..."
+  python experiment.py
+
+Output:
+  results.csv  — one row per item response (96 trials × ~8 items avg = ~768 rows)
+"""
+
+import os
+import csv
+import time
+import re
+import json
+from datetime import datetime
+
+# ── API clients ──────────────────────────────────────────────────────────────
+from openai import OpenAI
+from groq import Groq
+
+def _openai_client():
+    return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+def _groq_client():
+    return Groq(api_key=os.environ["GROQ_API_KEY"])
+
+# ── Instrument definitions ────────────────────────────────────────────────────
+PHQ9_ITEMS = [
+    (1,  "Little interest or pleasure in doing things"),
+    (2,  "Feeling down, depressed, or hopeless"),
+    (3,  "Trouble falling or staying asleep, or sleeping too much"),
+    (4,  "Feeling tired or having little energy"),
+    (5,  "Poor appetite or overeating"),
+    (6,  "Feeling bad about yourself — or that you are a failure or have let yourself or your family down"),
+    (7,  "Trouble concentrating on things, such as reading the newspaper or watching television"),
+    (8,  "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual"),
+    (9,  "Thoughts that you would be better off dead, or of hurting yourself in some way"),
+]
+
+GAD7_ITEMS = [
+    (1,  "Feeling nervous, anxious, or on edge"),
+    (2,  "Not being able to stop or control worrying"),
+    (3,  "Worrying too much about different things"),
+    (4,  "Trouble relaxing"),
+    (5,  "Being so restless that it's hard to sit still"),
+    (6,  "Becoming easily annoyed or irritable"),
+    (7,  "Feeling afraid, as if something awful might happen"),
+]
+
+ITEM_SCALE = "0 = Not at all, 1 = Several days, 2 = More than half the days, 3 = Nearly every day"
+
+# ── Vignettes ─────────────────────────────────────────────────────────────────
+# Each vignette has:
+#   text_standard     : full vignette including diagnosis label
+#   text_label_removed: identical symptom detail, diagnosis/severity labels stripped
+#   instruments       : list of "PHQ9" and/or "GAD7"
+#   ground_truth      : dict mapping instrument → {item_number: expected_score}
+#   expected_band     : dict mapping instrument → severity band string
+
+VIGNETTES = {
+    "V1": {
+        "patient": "Mr. A (45M)",
+        "condition": "MDD, moderate-severe",
+        "text_standard": (
+            "Mr. A is a 45-year-old man who presents to the clinic reporting a 4-week history "
+            "of feeling 'down in the dumps' and empty nearly every day. He has completely lost "
+            "interest in his usual hobbies, including golf and reading, stating he derives no "
+            "pleasure from them anymore. He reports a 10-pound weight loss over the past month "
+            "because he has to force himself to eat. He struggles with terminal insomnia, waking "
+            "up at 3:00 AM unable to return to sleep, and feels profound fatigue throughout the "
+            "day. He is visibly slowed down in his speech and movements (psychomotor retardation) "
+            "and expresses deep, unjustified guilt about 'failing' his family despite being a "
+            "reliable provider. His symptoms severely impair his ability to concentrate at work. "
+            "[Diagnosis: Major Depressive Disorder, moderate-severe]"
+        ),
+        "text_label_removed": (
+            "Mr. A is a 45-year-old man who presents to the clinic reporting a 4-week history "
+            "of feeling 'down in the dumps' and empty nearly every day. He has completely lost "
+            "interest in his usual hobbies, including golf and reading, stating he derives no "
+            "pleasure from them anymore. He reports a 10-pound weight loss over the past month "
+            "because he has to force himself to eat. He struggles with terminal insomnia, waking "
+            "up at 3:00 AM unable to return to sleep, and feels profound fatigue throughout the "
+            "day. He is visibly slowed down in his speech and movements and expresses deep, "
+            "unjustified guilt about 'failing' his family despite being a reliable provider. "
+            "His symptoms severely impair his ability to concentrate at work."
+        ),
+        "instruments": ["PHQ9"],
+        "ground_truth": {
+            # Fill in your pre-scored values here after intra-rater reliability is confirmed
+            # Format: item_number: score (0-3)
+            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
+                     6: None, 7: None, 8: None, 9: None}
+        },
+        "expected_band": {"PHQ9": "Moderately severe–severe (15–27)"},
+    },
+
+    "V2": {
+        "patient": "Ms. B (32F)",
+        "condition": "MDD, mild-moderate",
+        "text_standard": (
+            "Ms. B is a 32-year-old woman who presents to her primary care physician reporting "
+            "that she has felt persistently sad, empty, and discouraged nearly every day for the "
+            "past three weeks. She notes a marked loss of interest in her usual activities, stating "
+            "she no longer enjoys her weekly book club or gardening. During this same three-week "
+            "period, she has experienced frequent insomnia, profound daytime fatigue, and a "
+            "diminished ability to concentrate on tasks at her accounting job. She also frequently "
+            "ruminates on feelings of excessive guilt regarding her recent lack of productivity. "
+            "While her symptoms cause her significant distress, she is still managing to meet her "
+            "basic role obligations at work and home, albeit with substantial effort and minor "
+            "impairment. She has never experienced a manic or hypomanic episode. "
+            "[Diagnosis: Major Depressive Disorder, mild-moderate]"
+        ),
+        "text_label_removed": (
+            "Ms. B is a 32-year-old woman who presents to her primary care physician reporting "
+            "that she has felt persistently sad, empty, and discouraged nearly every day for the "
+            "past three weeks. She notes a marked loss of interest in her usual activities, stating "
+            "she no longer enjoys her weekly book club or gardening. During this same three-week "
+            "period, she has experienced frequent insomnia, profound daytime fatigue, and a "
+            "diminished ability to concentrate on tasks at her accounting job. She also frequently "
+            "ruminates on feelings of excessive guilt regarding her recent lack of productivity. "
+            "While her symptoms cause her significant distress, she is still managing to meet her "
+            "basic role obligations at work and home, albeit with substantial effort and minor "
+            "impairment. She has never experienced a manic or hypomanic episode."
+        ),
+        "instruments": ["PHQ9"],
+        "ground_truth": {
+            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
+                     6: None, 7: None, 8: None, 9: None}
+        },
+        "expected_band": {"PHQ9": "Mild–moderate (5–14)"},
+    },
+
+    "V3": {
+        "patient": "Mr. C (34M)",
+        "condition": "GAD, moderate",
+        "text_standard": (
+            "Mr. C is a 34-year-old man who reports an 8-month history of persistent, excessive "
+            "worry about his job performance, his finances, and his children's safety. He finds it "
+            "nearly impossible to control the worry, stating it 'takes over my brain'. Associated "
+            "with this apprehensive expectation, he experiences chronic muscle tension, feels "
+            "'keyed up' constantly, and is easily fatigued by the end of the day. He specifically "
+            "reports having trouble relaxing on more than half the days and being so restless that "
+            "it is hard to sit still on more than half the days. He also has difficulty falling "
+            "asleep at night because his mind is racing with 'what ifs'. His constant anxiety has "
+            "caused clinically significant distress, creating friction in his marriage and "
+            "distracting him at work, though he still manages to maintain his overall job "
+            "performance with effort. [Diagnosis: Generalized Anxiety Disorder, moderate]"
+        ),
+        "text_label_removed": (
+            "Mr. C is a 34-year-old man who reports an 8-month history of persistent, excessive "
+            "worry about his job performance, his finances, and his children's safety. He finds it "
+            "nearly impossible to control the worry, stating it 'takes over my brain'. Associated "
+            "with this apprehensive expectation, he experiences chronic muscle tension, feels "
+            "'keyed up' constantly, and is easily fatigued by the end of the day. He specifically "
+            "reports having trouble relaxing on more than half the days and being so restless that "
+            "it is hard to sit still on more than half the days. He also has difficulty falling "
+            "asleep at night because his mind is racing with 'what ifs'. His constant anxiety has "
+            "caused clinically significant distress, creating friction in his marriage and "
+            "distracting him at work, though he still manages to maintain his overall job "
+            "performance with effort."
+        ),
+        "instruments": ["GAD7"],
+        "ground_truth": {
+            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+        },
+        "expected_band": {"GAD7": "Moderate (10–14)"},
+    },
+
+    "V4": {
+        "patient": "Ms. D (28F)",
+        "condition": "GAD, severe",
+        "text_standard": (
+            "Ms. D is a 28-year-old woman who presents to her primary care clinic reporting a "
+            "12-month history of constant, overwhelming anxiety that she feels is 'ruining her life.' "
+            "She experiences excessive, uncontrollable worry occurring nearly every day, focusing on "
+            "a wide range of topics including her job security, her mounting credit card debt, her "
+            "parents' health, and the possibility of getting into a car accident. She finds it "
+            "entirely impossible to control or set aside these worries. Accompanying this persistent "
+            "apprehension, she reports feeling constantly 'keyed up' and on edge, suffers from "
+            "chronic muscle tension in her neck and shoulders, and has severe insomnia, managing "
+            "only a few hours of restless sleep each night. Consequently, she is profoundly fatigued "
+            "and complains that her mind frequently 'goes blank'. She specifically notes having "
+            "trouble relaxing nearly every day, being so restless that it is hard to sit still "
+            "nearly every day, becoming easily annoyed or irritable nearly every day, and feeling "
+            "afraid, as if something awful might happen nearly every day. The severity of her "
+            "symptoms has caused marked functional impairment; her inability to concentrate and "
+            "constant exhaustion have made it impossible for her to do her job efficiently, resulting "
+            "in her recently being placed on a short-term disability leave. "
+            "[Diagnosis: Generalized Anxiety Disorder, severe]"
+        ),
+        "text_label_removed": (
+            "Ms. D is a 28-year-old woman who presents to her primary care clinic reporting a "
+            "12-month history of constant, overwhelming anxiety that she feels is 'ruining her life.' "
+            "She experiences excessive, uncontrollable worry occurring nearly every day, focusing on "
+            "a wide range of topics including her job security, her mounting credit card debt, her "
+            "parents' health, and the possibility of getting into a car accident. She finds it "
+            "entirely impossible to control or set aside these worries. Accompanying this persistent "
+            "apprehension, she reports feeling constantly 'keyed up' and on edge, suffers from "
+            "chronic muscle tension in her neck and shoulders, and has severe insomnia, managing "
+            "only a few hours of restless sleep each night. Consequently, she is profoundly fatigued "
+            "and complains that her mind frequently 'goes blank'. She specifically notes having "
+            "trouble relaxing nearly every day, being so restless that it is hard to sit still "
+            "nearly every day, becoming easily annoyed or irritable nearly every day, and feeling "
+            "afraid, as if something awful might happen nearly every day. The severity of her "
+            "symptoms has caused marked functional impairment; her inability to concentrate and "
+            "constant exhaustion have made it impossible for her to do her job efficiently, resulting "
+            "in her recently being placed on a short-term disability leave."
+        ),
+        "instruments": ["GAD7"],
+        "ground_truth": {
+            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+        },
+        "expected_band": {"GAD7": "Severe (15–21)"},
+    },
+
+    "V5": {
+        "patient": "Mr. E (50M)",
+        "condition": "MDD with anxious distress specifier, moderate",
+        "text_standard": (
+            "Mr. E is a 50-year-old man who meets the criteria for a major depressive episode, "
+            "presenting with a 6-week history of persistently depressed mood, a marked loss of "
+            "interest in his usual activities, hypersomnia, fatigue, and a diminished ability to "
+            "concentrate. While his symptoms cause him notable distress and affect his work "
+            "performance, his functional impairment is intermediate between mild and severe, "
+            "allowing him to still manage his daily obligations with some effort. Concurrently, "
+            "during the majority of days of this depressive episode, he reports exactly three "
+            "symptoms of anxious distress: he frequently feels keyed up and tense, is unusually "
+            "restless, and struggles with a pervasive fear that 'something awful may happen'. "
+            "Because he experiences exactly three of these specific anxiety symptoms, his anxious "
+            "distress is classified as moderate. "
+            "[Diagnosis: Major Depressive Disorder with anxious distress specifier, moderate]"
+        ),
+        "text_label_removed": (
+            "Mr. E is a 50-year-old man presenting with a 6-week history of persistently depressed "
+            "mood, a marked loss of interest in his usual activities, hypersomnia, fatigue, and a "
+            "diminished ability to concentrate. While his symptoms cause him notable distress and "
+            "affect his work performance, his functional impairment is intermediate, allowing him "
+            "to still manage his daily obligations with some effort. Concurrently, during the "
+            "majority of days, he reports three additional symptoms: he frequently feels keyed up "
+            "and tense, is unusually restless, and struggles with a pervasive fear that 'something "
+            "awful may happen'."
+        ),
+        "instruments": ["PHQ9", "GAD7"],
+        "ground_truth": {
+            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
+                     6: None, 7: None, 8: None, 9: None},
+            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+        },
+        "expected_band": {
+            "PHQ9": "Moderate (10–14)",
+            "GAD7": "Moderate partial (3 specifier symptoms)"
+        },
+    },
+
+    "V6": {
+        "patient": "Ms. F (39F)",
+        "condition": "Comorbid MDD + GAD, both severe",
+        "text_standard": (
+            "Ms. F is a 39-year-old woman who presents with a lifelong history of excessive, "
+            "uncontrollable worry regarding everyday events that occurs more days than not. Her "
+            "anxiety is accompanied by all six of the associated physical and cognitive symptoms: "
+            "she frequently feels restless and keyed up or on edge, is easily fatigued, struggles "
+            "with difficulty concentrating (her mind often goes blank), experiences frequent "
+            "irritability, suffers from chronic muscle tension, and reports significant sleep "
+            "disturbance. This chronic worry heavily impacts her daily functioning. Over the past "
+            "three weeks, she has additionally developed exactly five symptoms characteristic of a "
+            "major depressive episode present nearly every day: a pervasive sad and depressed mood, "
+            "markedly diminished interest or pleasure in her usual activities, a significant "
+            "decrease in appetite resulting in weight loss, profound fatigue/loss of energy, and "
+            "persistent feelings of worthlessness. Her generalized anxiety is severe enough to "
+            "warrant clinical attention independently of her new depressive symptoms. "
+            "[Diagnosis: Comorbid Major Depressive Disorder and Generalized Anxiety Disorder, both severe]"
+        ),
+        "text_label_removed": (
+            "Ms. F is a 39-year-old woman who presents with a lifelong history of excessive, "
+            "uncontrollable worry regarding everyday events that occurs more days than not. Her "
+            "anxiety is accompanied by all six of the associated physical and cognitive symptoms: "
+            "she frequently feels restless and keyed up or on edge, is easily fatigued, struggles "
+            "with difficulty concentrating (her mind often goes blank), experiences frequent "
+            "irritability, suffers from chronic muscle tension, and reports significant sleep "
+            "disturbance. This chronic worry heavily impacts her daily functioning. Over the past "
+            "three weeks, she has additionally developed exactly five new symptoms present nearly "
+            "every day: a pervasive sad and depressed mood, markedly diminished interest or "
+            "pleasure in her usual activities, a significant decrease in appetite resulting in "
+            "weight loss, profound fatigue/loss of energy, and persistent feelings of worthlessness."
+        ),
+        "instruments": ["PHQ9", "GAD7"],
+        "ground_truth": {
+            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
+                     6: None, 7: None, 8: None, 9: None},
+            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+        },
+        "expected_band": {
+            "PHQ9": "Moderate–severe (15+)",
+            "GAD7": "Severe (15–21)"
+        },
+    },
+
+    "V7": {
+        "patient": "Mr. G (28M)",
+        "condition": "GAD, mild (contrast case)",
+        "text_standard": (
+            "Mr. G is a 28-year-old man who presents with excessive, pervasive, and pronounced "
+            "worry about his work performance and his finances, occurring more days than not for "
+            "the past 6 months. He finds it nearly impossible to control the worry, which "
+            "frequently occurs without specific precipitants. His psychological distress is "
+            "accompanied by three physical symptoms: persistent restlessness, muscle tension, and "
+            "sleep disturbance. His symptoms cause him clinically significant distress, but he is "
+            "still able to exert enough effort to maintain his job performance, demonstrating a "
+            "mild, manageable level of impairment. "
+            "[Diagnosis: Generalized Anxiety Disorder, mild]"
+        ),
+        "text_label_removed": (
+            "Mr. G is a 28-year-old man who presents with excessive, pervasive, and pronounced "
+            "worry about his work performance and his finances, occurring more days than not for "
+            "the past 6 months. He finds it nearly impossible to control the worry, which "
+            "frequently occurs without specific precipitants. His psychological distress is "
+            "accompanied by three physical symptoms: persistent restlessness, muscle tension, and "
+            "sleep disturbance. His symptoms cause him clinically significant distress, but he is "
+            "still able to exert enough effort to maintain his job performance."
+        ),
+        "instruments": ["GAD7"],
+        "ground_truth": {
+            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+        },
+        "expected_band": {"GAD7": "Mild (5–9)"},
+    },
+
+    "V8": {
+        "patient": "Ms. H (40F)",
+        "condition": "MDD, mild (contrast case)",
+        "text_standard": (
+            "Ms. H is a 40-year-old woman who presents to the clinic reporting that over the last "
+            "2 weeks, she has been bothered by feeling down, depressed, or hopeless on more than "
+            "half the days. Rather than a total inability to anticipate happiness, she notes having "
+            "little interest or pleasure in doing things on more than half the days. She also "
+            "reports feeling tired or having little energy on more than half the days. She "
+            "experiences trouble falling or staying asleep on several days, and has trouble "
+            "concentrating on things on several days. She experiences occasional rumination, "
+            "feeling bad about herself — or that she is a failure — on several days. Her symptoms "
+            "cause her clinically significant distress, but she only finds it 'somewhat difficult' "
+            "to do her work and take care of things at home, resulting in minor impairment. "
+            "[Diagnosis: Major Depressive Disorder, single episode, mild]"
+        ),
+        "text_label_removed": (
+            "Ms. H is a 40-year-old woman who presents to the clinic reporting that over the last "
+            "2 weeks, she has been bothered by feeling down, depressed, or hopeless on more than "
+            "half the days. Rather than a total inability to anticipate happiness, she notes having "
+            "little interest or pleasure in doing things on more than half the days. She also "
+            "reports feeling tired or having little energy on more than half the days. She "
+            "experiences trouble falling or staying asleep on several days, and has trouble "
+            "concentrating on things on several days. She experiences occasional rumination, "
+            "feeling bad about herself — or that she is a failure — on several days. Her symptoms "
+            "cause her clinically significant distress, but she only finds it 'somewhat difficult' "
+            "to do her work and take care of things at home, resulting in minor impairment."
+        ),
+        "instruments": ["PHQ9"],
+        "ground_truth": {
+            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
+                     6: None, 7: None, 8: None, 9: None}
+        },
+        "expected_band": {"PHQ9": "Mild (5–9)"},
+    },
+}
+
+# ── Severity band helpers ─────────────────────────────────────────────────────
+PHQ9_BANDS = [
+    (0,  4,  "Minimal"),
+    (5,  9,  "Mild"),
+    (10, 14, "Moderate"),
+    (15, 19, "Moderately severe"),
+    (20, 27, "Severe"),
+]
+
+GAD7_BANDS = [
+    (0,  4,  "Minimal"),
+    (5,  9,  "Mild"),
+    (10, 14, "Moderate"),
+    (15, 21, "Severe"),
+]
+
+def score_to_band(total: int, instrument: str) -> str:
+    bands = PHQ9_BANDS if instrument == "PHQ9" else GAD7_BANDS
+    for lo, hi, label in bands:
+        if lo <= total <= hi:
+            return label
+    return "Out of range"
+
+def bands_within_one(band_a: str, band_b: str, instrument: str) -> bool:
+    """Returns True if two band labels are within one severity step of each other."""
+    order = [b[2] for b in (PHQ9_BANDS if instrument == "PHQ9" else GAD7_BANDS)]
+    if band_a not in order or band_b not in order:
+        return False
+    return abs(order.index(band_a) - order.index(band_b)) <= 1
+
+# ── Prompt builders ───────────────────────────────────────────────────────────
+SYSTEM_TEMPLATE = """You are roleplaying as the following patient. Stay in character throughout. 
+Do not add clinical commentary, disclaimers, or meta-observations about your role.
+Respond only as this patient would respond when asked questions about their symptoms.
+
+PATIENT DESCRIPTION:
+{vignette_text}"""
+
+ITEM_TEMPLATE = """Over the last two weeks, how often have you been bothered by the following problem?
+
+"{item_text}"
+
+Respond with a single integer using this scale:
+{scale}
+
+Reply with the number only. Do not explain."""
+
+# ── API call wrappers ─────────────────────────────────────────────────────────
+def call_gpt4o(system_prompt: str, item_prompt: str) -> str:
+    response = _openai_client().chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        seed=42,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": item_prompt},
+        ],
+        max_tokens=10,
+    )
+    return response.choices[0].message.content.strip()
+
+def call_llama31(system_prompt: str, item_prompt: str) -> str:
+    response = _groq_client().chat.completions.create(
+        model="llama-3.3-70b-versatile",   # adjust if using a different Llama 3.3 variant
+        temperature=0,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": item_prompt},
+        ],
+        max_tokens=10,
+    )
+    return response.choices[0].message.content.strip()
+
+MODEL_CALLERS = {
+    "gpt4o":   call_gpt4o,
+    "llama31": call_llama31,
+}
+
+# ── Response parser ───────────────────────────────────────────────────────────
+def parse_score(raw: str) -> int | None:
+    """Extract first integer 0–3 from raw model response. Returns None if unparseable."""
+    match = re.search(r"\b([0-3])\b", raw)
+    return int(match.group(1)) if match else None
+
+# ── CSV setup ─────────────────────────────────────────────────────────────────
+CSV_FIELDS = [
+    "trial_id", "vignette_id", "patient", "condition",
+    "model", "prompt_condition", "run_number",
+    "instrument", "item_number", "item_text",
+    "raw_response", "parsed_score", "ground_truth_score", "deviation",
+]
+
+def make_trial_id(vignette_id, model, prompt_condition, run, instrument, item_num):
+    return f"{vignette_id}_{model}_{prompt_condition}_r{run}_{instrument}_i{item_num}"
+
+# ── Main experiment loop ──────────────────────────────────────────────────────
+def run_experiment(
+    output_path: str = "results.csv",
+    n_runs: int = 3,
+    models: list = None,
+    vignette_ids: list = None,
+    dry_run: bool = False,
+):
+    """
+    Args:
+        output_path  : path to output CSV
+        n_runs       : number of runs per cell (default 3)
+        models       : subset of ["gpt4o", "llama31"] to run; None = both
+        vignette_ids : subset of vignette keys to run; None = all
+        dry_run      : if True, print prompts without calling APIs
+    """
+    models        = models        or ["gpt4o", "llama31"]
+    vignette_ids  = vignette_ids  or list(VIGNETTES.keys())
+    conditions    = ["standard", "label_removed"]
+
+    instrument_items = {"PHQ9": PHQ9_ITEMS, "GAD7": GAD7_ITEMS}
+
+    total_calls = (
+        len(vignette_ids) * len(models) * len(conditions) * n_runs
+        * sum(
+            sum(len(instrument_items[inst]) for inst in VIGNETTES[v]["instruments"])
+            for v in vignette_ids
+        ) // len(vignette_ids)
+    )
+    print(f"[INFO] Starting experiment | vignettes={vignette_ids} | models={models} "
+          f"| runs={n_runs} | estimated_api_calls≈{total_calls}")
+
+    file_exists = os.path.exists(output_path)
+    with open(output_path, "a", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=CSV_FIELDS)
+        if not file_exists:
+            writer.writeheader()
+
+        for vignette_id in vignette_ids:
+            vignette = VIGNETTES[vignette_id]
+            print(f"\n{'='*60}")
+            print(f"Vignette: {vignette_id} | {vignette['patient']} | {vignette['condition']}")
+
+            for model_name in models:
+                caller = MODEL_CALLERS[model_name]
+
+                for condition in conditions:
+                    vignette_text = (
+                        vignette["text_standard"]
+                        if condition == "standard"
+                        else vignette["text_label_removed"]
+                    )
+                    system_prompt = SYSTEM_TEMPLATE.format(vignette_text=vignette_text)
+
+                    for run in range(1, n_runs + 1):
+                        print(f"  [{model_name}] [{condition}] run {run}/{n_runs}")
+
+                        for instrument in vignette["instruments"]:
+                            items = instrument_items[instrument]
+                            gt_scores = vignette["ground_truth"].get(instrument, {})
+
+                            for item_num, item_text in items:
+                                item_prompt = ITEM_TEMPLATE.format(
+                                    item_text=item_text,
+                                    scale=ITEM_SCALE,
+                                )
+
+                                if dry_run:
+                                    print(f"    [DRY RUN] {instrument} item {item_num}: {item_text[:50]}...")
+                                    raw_response  = "DRY_RUN"
+                                    parsed_score  = None
+                                else:
+                                    try:
+                                        raw_response = caller(system_prompt, item_prompt)
+                                        time.sleep(0.5)  # gentle rate limiting
+                                    except Exception as e:
+                                        print(f"    [ERROR] {e}")
+                                        raw_response = f"ERROR: {e}"
+
+                                    parsed_score = parse_score(raw_response)
+
+                                gt_score  = gt_scores.get(item_num)   # None until you fill in
+                                deviation = (
+                                    abs(parsed_score - gt_score)
+                                    if parsed_score is not None and gt_score is not None
+                                    else None
+                                )
+
+                                row = {
+                                    "trial_id":        make_trial_id(
+                                                           vignette_id, model_name,
+                                                           condition, run, instrument, item_num),
+                                    "vignette_id":     vignette_id,
+                                    "patient":         vignette["patient"],
+                                    "condition":       vignette["condition"],
+                                    "model":           model_name,
+                                    "prompt_condition": condition,
+                                    "run_number":      run,
+                                    "instrument":      instrument,
+                                    "item_number":     item_num,
+                                    "item_text":       item_text,
+                                    "raw_response":    raw_response,
+                                    "parsed_score":    parsed_score,
+                                    "ground_truth_score": gt_score,
+                                    "deviation":       deviation,
+                                }
+                                writer.writerow(row)
+                                csvfile.flush()  # write immediately; safe to interrupt
+
+    print(f"\n[DONE] Results saved to: {output_path}")
+
+
+# ── Quick analysis after experiment ──────────────────────────────────────────
+def analyze_results(csv_path: str = "results.csv"):
+    """
+    Reads results.csv and prints:
+      - Per-vignette, per-model, per-condition MAD
+      - Instrument-level severity band + pass/fail
+      - Bias flag (standard vs label_removed score divergence)
+    """
+    import csv as csv_mod
+    from collections import defaultdict
+
+    rows = []
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        reader = csv_mod.DictReader(f)
+        for r in reader:
+            rows.append(r)
+
+    if not rows:
+        print("No data found.")
+        return
+
+    # Group: (vignette_id, model, prompt_condition, instrument) → list of (parsed, gt)
+    groups = defaultdict(list)
+    for r in rows:
+        key = (r["vignette_id"], r["model"], r["prompt_condition"], r["instrument"])
+        ps  = int(r["parsed_score"])    if r["parsed_score"]        not in ("", "None", None) else None
+        gt  = int(r["ground_truth_score"]) if r["ground_truth_score"] not in ("", "None", None) else None
+        groups[key].append((ps, gt))
+
+    print("\n" + "="*70)
+    print("FIDELITY ANALYSIS")
+    print("="*70)
+
+    # MAD per group
+    for (vid, model, cond, inst), pairs in sorted(groups.items()):
+        valid  = [(ps, gt) for ps, gt in pairs if ps is not None and gt is not None]
+        if not valid:
+            continue
+        mad = sum(abs(ps - gt) for ps, gt in valid) / len(valid)
+        llm_total = sum(ps for ps, _ in valid)
+        gt_total  = sum(gt for _, gt in valid)
+        llm_band  = score_to_band(llm_total, inst)
+        gt_band   = score_to_band(gt_total,  inst)
+        within_1  = bands_within_one(llm_band, gt_band, inst)
+
+        print(f"\n{vid} | {model} | {cond} | {inst}")
+        print(f"  MAD: {mad:.3f}")
+        print(f"  LLM total: {llm_total} ({llm_band})  |  GT total: {gt_total} ({gt_band})")
+        print(f"  Within-one-band: {'PASS ✓' if within_1 else 'FAIL ✗'}")
+
+    # Bias detection: standard vs label_removed total score delta per (vid, model, inst)
+    print("\n" + "-"*70)
+    print("BIAS DETECTION (standard vs label_removed divergence)")
+    print("-"*70)
+    totals = defaultdict(lambda: {"standard": [], "label_removed": []})
+    for (vid, model, cond, inst), pairs in groups.items():
+        valid = [ps for ps, gt in pairs if ps is not None]
+        if valid:
+            totals[(vid, model, inst)][cond].extend(valid)
+
+    for (vid, model, inst), cond_scores in sorted(totals.items()):
+        std_scores = cond_scores.get("standard", [])
+        lbl_scores = cond_scores.get("label_removed", [])
+        if std_scores and lbl_scores:
+            std_mean = sum(std_scores) / len(std_scores)
+            lbl_mean = sum(lbl_scores) / len(lbl_scores)
+            delta = std_mean - lbl_mean
+            flag = "⚠️  LABEL BIAS" if abs(delta) >= 2 else "OK"
+            print(f"  {vid} | {model} | {inst}: Δ={delta:+.2f}  {flag}")
+
+
+# ── Entry point ───────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="LLM Symptom Fidelity Experiment")
+    parser.add_argument("--output",    default="results.csv",    help="Output CSV path")
+    parser.add_argument("--runs",      type=int, default=3,      help="Runs per cell")
+    parser.add_argument("--models",    nargs="+", default=None,  help="gpt4o llama31")
+    parser.add_argument("--vignettes", nargs="+", default=None,  help="V1 V2 ... V8")
+    parser.add_argument("--dry-run",   action="store_true",      help="Print without calling APIs")
+    parser.add_argument("--analyze",   action="store_true",      help="Run analysis on existing CSV")
+    args = parser.parse_args()
+
+    if args.analyze:
+        analyze_results(args.output)
+    else:
+        run_experiment(
+            output_path=args.output,
+            n_runs=args.runs,
+            models=args.models,
+            vignette_ids=args.vignettes,
+            dry_run=args.dry_run,
+        )
