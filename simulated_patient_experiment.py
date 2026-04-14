@@ -532,7 +532,7 @@ def run_experiment(
                                 else:
                                     try:
                                         raw_response = caller(system_prompt, item_prompt)
-                                        time.sleep(0.5)  # gentle rate limiting
+                                        time.sleep(2.1)  # gentle rate limiting
                                     except Exception as e:
                                         print(f"    [ERROR] {e}")
                                         raw_response = f"ERROR: {e}"
