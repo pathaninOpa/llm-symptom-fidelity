@@ -28,6 +28,9 @@ import time
 import re
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ── API clients ──────────────────────────────────────────────────────────────
 from openai import OpenAI
