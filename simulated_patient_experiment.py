@@ -77,34 +77,33 @@ VIGNETTES = {
         "patient": "Mr. A (45M)",
         "condition": "MDD, moderate-severe",
         "text_standard": (
-            "Mr. A is a 45-year-old man who presents to the clinic reporting a 4-week history "
-            "of feeling 'down in the dumps' and empty nearly every day. He has completely lost "
-            "interest in his usual hobbies, including golf and reading, stating he derives no "
-            "pleasure from them anymore. He reports a 10-pound weight loss over the past month "
-            "because he has to force himself to eat. He struggles with terminal insomnia, waking "
-            "up at 3:00 AM unable to return to sleep, and feels profound fatigue throughout the "
-            "day. He is visibly slowed down in his speech and movements (psychomotor retardation) "
-            "and expresses deep, unjustified guilt about 'failing' his family despite being a "
-            "reliable provider. His symptoms severely impair his ability to concentrate at work. "
-            "[Diagnosis: Major Depressive Disorder, moderate-severe]"
+            "Mr. A is a 45-year-old man who presents to the clinic reporting a 4-week history of feeling "
+            "\"down in the dumps\" and empty most of the day, nearly every day. He has markedly diminished "
+            "interest in his usual hobbies, including golf and reading, nearly every day, stating he derives "
+            "no pleasure from them anymore. He reports a 10-pound weight loss over the past month because he "
+            "experiences a decrease in appetite nearly every day and has to force himself to eat. He struggles "
+            "with terminal insomnia nearly every day, waking up at 3:00 AM unable to return to sleep, and "
+            "experiences fatigue or loss of energy nearly every day. He is visibly slowed down in his speech "
+            "and movements (psychomotor retardation) nearly every day and expresses excessive or inappropriate "
+            "guilt nearly every day about \"failing\" his family despite being a reliable provider. His symptoms "
+            "result in a diminished ability to concentrate at work nearly every day. "
+            "[Diagnosis: Major Depressive Disorder, moderate to severe]"
         ),
         "text_label_removed": (
-            "Mr. A is a 45-year-old man who presents to the clinic reporting a 4-week history "
-            "of feeling 'down in the dumps' and empty nearly every day. He has completely lost "
-            "interest in his usual hobbies, including golf and reading, stating he derives no "
-            "pleasure from them anymore. He reports a 10-pound weight loss over the past month "
-            "because he has to force himself to eat. He struggles with terminal insomnia, waking "
-            "up at 3:00 AM unable to return to sleep, and feels profound fatigue throughout the "
-            "day. He is visibly slowed down in his speech and movements and expresses deep, "
-            "unjustified guilt about 'failing' his family despite being a reliable provider. "
-            "His symptoms severely impair his ability to concentrate at work."
+            "Mr. A is a 45-year-old man who presents to the clinic reporting a 4-week history of feeling "
+            "\"down in the dumps\" and empty most of the day, nearly every day. He has markedly diminished "
+            "interest in his usual hobbies, including golf and reading, nearly every day, stating he derives "
+            "no pleasure from them anymore. He reports a 10-pound weight loss over the past month because he "
+            "experiences a decrease in appetite nearly every day and has to force himself to eat. He struggles "
+            "with terminal insomnia nearly every day, waking up at 3:00 AM unable to return to sleep, and "
+            "experiences fatigue or loss of energy nearly every day. He is visibly slowed down in his speech "
+            "and movements (psychomotor retardation) nearly every day and expresses excessive or inappropriate "
+            "guilt nearly every day about \"failing\" his family despite being a reliable provider. His symptoms "
+            "result in a diminished ability to concentrate at work nearly every day."
         ),
         "instruments": ["PHQ9"],
         "ground_truth": {
-            # Fill in your pre-scored values here after intra-rater reliability is confirmed
-            # Format: item_number: score (0-3)
-            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
-                     6: None, 7: None, 8: None, 9: None}
+            "PHQ9": {1: 3, 2: 3, 3: 3, 4: 3, 5: 3, 6: 3, 7: 3, 8: 3, 9: 0}
         },
         "expected_band": {"PHQ9": "Moderately severe–severe (15–27)"},
     },
@@ -113,34 +112,31 @@ VIGNETTES = {
         "patient": "Ms. B (32F)",
         "condition": "MDD, mild-moderate",
         "text_standard": (
-            "Ms. B is a 32-year-old woman who presents to her primary care physician reporting "
-            "that she has felt persistently sad, empty, and discouraged nearly every day for the "
-            "past three weeks. She notes a marked loss of interest in her usual activities, stating "
-            "she no longer enjoys her weekly book club or gardening. During this same three-week "
-            "period, she has experienced frequent insomnia, profound daytime fatigue, and a "
-            "diminished ability to concentrate on tasks at her accounting job. She also frequently "
-            "ruminates on feelings of excessive guilt regarding her recent lack of productivity. "
-            "While her symptoms cause her significant distress, she is still managing to meet her "
-            "basic role obligations at work and home, albeit with substantial effort and minor "
-            "impairment. She has never experienced a manic or hypomanic episode. "
-            "[Diagnosis: Major Depressive Disorder, mild-moderate]"
+            "Ms. B is a 32-year-old woman who presents to her primary care physician reporting that she has "
+            "felt sad, empty, and discouraged nearly every day for the past three weeks. She notes a marked loss "
+            "of interest in her usual activities nearly every day, stating she no longer enjoys her weekly book "
+            "club or gardening. During this same three-week period, she has experienced insomnia more than half "
+            "the days, daytime fatigue nearly every day, and a diminished ability to concentrate on tasks at her "
+            "accounting job more than half the days. She also ruminates on feelings of excessive guilt regarding "
+            "her recent lack of productivity on several days. While her symptoms cause her significant distress, "
+            "she is still managing to meet her basic role obligations at work and home, albeit with substantial "
+            "effort and minor impairment. She has never experienced a manic or hypomanic episode. "
+            "[Diagnosis: Major Depressive Disorder, mild to moderate]"
         ),
         "text_label_removed": (
-            "Ms. B is a 32-year-old woman who presents to her primary care physician reporting "
-            "that she has felt persistently sad, empty, and discouraged nearly every day for the "
-            "past three weeks. She notes a marked loss of interest in her usual activities, stating "
-            "she no longer enjoys her weekly book club or gardening. During this same three-week "
-            "period, she has experienced frequent insomnia, profound daytime fatigue, and a "
-            "diminished ability to concentrate on tasks at her accounting job. She also frequently "
-            "ruminates on feelings of excessive guilt regarding her recent lack of productivity. "
-            "While her symptoms cause her significant distress, she is still managing to meet her "
-            "basic role obligations at work and home, albeit with substantial effort and minor "
-            "impairment. She has never experienced a manic or hypomanic episode."
+            "Ms. B is a 32-year-old woman who presents to her primary care physician reporting that she has "
+            "felt sad, empty, and discouraged nearly every day for the past three weeks. She notes a marked loss "
+            "of interest in her usual activities nearly every day, stating she no longer enjoys her weekly book "
+            "club or gardening. During this same three-week period, she has experienced insomnia more than half "
+            "the days, daytime fatigue nearly every day, and a diminished ability to concentrate on tasks at her "
+            "accounting job more than half the days. She also ruminates on feelings of excessive guilt regarding "
+            "her recent lack of productivity on several days. While her symptoms cause her significant distress, "
+            "she is still managing to meet her basic role obligations at work and home, albeit with substantial "
+            "effort and minor impairment. She has never experienced a manic or hypomanic episode."
         ),
         "instruments": ["PHQ9"],
         "ground_truth": {
-            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
-                     6: None, 7: None, 8: None, 9: None}
+            "PHQ9": {1: 3, 2: 3, 3: 2, 4: 3, 5: 0, 6: 1, 7: 2, 8: 0, 9: 0}
         },
         "expected_band": {"PHQ9": "Mild–moderate (5–14)"},
     },
@@ -149,34 +145,32 @@ VIGNETTES = {
         "patient": "Mr. C (34M)",
         "condition": "GAD, moderate",
         "text_standard": (
-            "Mr. C is a 34-year-old man who reports an 8-month history of persistent, excessive "
-            "worry about his job performance, his finances, and his children's safety. He finds it "
-            "nearly impossible to control the worry, stating it 'takes over my brain'. Associated "
-            "with this apprehensive expectation, he experiences chronic muscle tension, feels "
-            "'keyed up' constantly, and is easily fatigued by the end of the day. He specifically "
-            "reports having trouble relaxing on more than half the days and being so restless that "
-            "it is hard to sit still on more than half the days. He also has difficulty falling "
-            "asleep at night because his mind is racing with 'what ifs'. His constant anxiety has "
-            "caused clinically significant distress, creating friction in his marriage and "
-            "distracting him at work, though he still manages to maintain his overall job "
-            "performance with effort. [Diagnosis: Generalized Anxiety Disorder, moderate]"
+            "Mr. C is a 34-year-old man who reports an 8-month history of excessive worry about his job "
+            "performance, his finances, and his children's safety occurring more days than not. He finds it "
+            "difficult to control the worry, stating it \"takes over my brain\". Associated with this apprehensive "
+            "expectation, he experiences muscle tension more days than not, feels \"keyed up\" on more than half "
+            "the days, and is easily fatigued more days than not. He specifically reports having trouble relaxing "
+            "on more than half the days and being so restless that it is hard to sit still on more than half the "
+            "days. He also has difficulty falling asleep at night more days than not because his mind is racing "
+            "with \"what ifs\". His anxiety has caused clinically significant distress, creating friction in his "
+            "marriage and distracting him at work, though he still manages to maintain his overall job performance "
+            "with effort. [Diagnosis: Generalized Anxiety Disorder, moderate]"
         ),
         "text_label_removed": (
-            "Mr. C is a 34-year-old man who reports an 8-month history of persistent, excessive "
-            "worry about his job performance, his finances, and his children's safety. He finds it "
-            "nearly impossible to control the worry, stating it 'takes over my brain'. Associated "
-            "with this apprehensive expectation, he experiences chronic muscle tension, feels "
-            "'keyed up' constantly, and is easily fatigued by the end of the day. He specifically "
-            "reports having trouble relaxing on more than half the days and being so restless that "
-            "it is hard to sit still on more than half the days. He also has difficulty falling "
-            "asleep at night because his mind is racing with 'what ifs'. His constant anxiety has "
-            "caused clinically significant distress, creating friction in his marriage and "
-            "distracting him at work, though he still manages to maintain his overall job "
-            "performance with effort."
+            "Mr. C is a 34-year-old man who reports an 8-month history of excessive worry about his job "
+            "performance, his finances, and his children's safety occurring more days than not. He finds it "
+            "difficult to control the worry, stating it \"takes over my brain\". Associated with this apprehensive "
+            "expectation, he experiences muscle tension more days than not, feels \"keyed up\" on more than half "
+            "the days, and is easily fatigued more days than not. He specifically reports having trouble relaxing "
+            "on more than half the days and being so restless that it is hard to sit still on more than half the "
+            "days. He also has difficulty falling asleep at night more days than not because his mind is racing "
+            "with \"what ifs\". His anxiety has caused clinically significant distress, creating friction in his "
+            "marriage and distracting him at work, though he still manages to maintain his overall job performance "
+            "with effort."
         ),
         "instruments": ["GAD7"],
         "ground_truth": {
-            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+            "GAD7": {1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 0, 7: 0}
         },
         "expected_band": {"GAD7": "Moderate (10–14)"},
     },
@@ -185,85 +179,81 @@ VIGNETTES = {
         "patient": "Ms. D (28F)",
         "condition": "GAD, severe",
         "text_standard": (
-            "Ms. D is a 28-year-old woman who presents to her primary care clinic reporting a "
-            "12-month history of constant, overwhelming anxiety that she feels is 'ruining her life.' "
-            "She experiences excessive, uncontrollable worry occurring nearly every day, focusing on "
-            "a wide range of topics including her job security, her mounting credit card debt, her "
-            "parents' health, and the possibility of getting into a car accident. She finds it "
-            "entirely impossible to control or set aside these worries. Accompanying this persistent "
-            "apprehension, she reports feeling constantly 'keyed up' and on edge, suffers from "
-            "chronic muscle tension in her neck and shoulders, and has severe insomnia, managing "
-            "only a few hours of restless sleep each night. Consequently, she is profoundly fatigued "
-            "and complains that her mind frequently 'goes blank'. She specifically notes having "
-            "trouble relaxing nearly every day, being so restless that it is hard to sit still "
-            "nearly every day, becoming easily annoyed or irritable nearly every day, and feeling "
-            "afraid, as if something awful might happen nearly every day. The severity of her "
-            "symptoms has caused marked functional impairment; her inability to concentrate and "
-            "constant exhaustion have made it impossible for her to do her job efficiently, resulting "
-            "in her recently being placed on a short-term disability leave. "
+            "Ms. D is a 28-year-old woman who presents to her primary care clinic reporting a 12-month history "
+            "of excessive anxiety and worry occurring more days than not, focusing on a wide range of topics "
+            "including her job security, her mounting credit card debt, her parents' health, and the possibility "
+            "of getting into a car accident. She finds it difficult to control the worry. Accompanying this "
+            "apprehensive expectation, she reports experiencing several physical and cognitive symptoms: she feels "
+            "\"keyed up\" or on edge nearly every day, experiences muscle tension more days than not, and has sleep "
+            "disturbance nearly every day, managing only a few hours of restless sleep each night. Consequently, she "
+            "is easily fatigued nearly every day and complains of difficulty concentrating or that her mind goes blank "
+            "nearly every day. She specifically notes having trouble relaxing nearly every day, being so restless that "
+            "it is hard to sit still nearly every day, becoming easily annoyed or irritable nearly every day, and feeling "
+            "afraid, as if something awful might happen nearly every day. Her symptoms cause clinically significant "
+            "impairment in occupational functioning; her difficulty concentrating and fatigue have made it impossible "
+            "for her to do her job efficiently, resulting in her recently being placed on a short-term disability leave. "
             "[Diagnosis: Generalized Anxiety Disorder, severe]"
         ),
         "text_label_removed": (
-            "Ms. D is a 28-year-old woman who presents to her primary care clinic reporting a "
-            "12-month history of constant, overwhelming anxiety that she feels is 'ruining her life.' "
-            "She experiences excessive, uncontrollable worry occurring nearly every day, focusing on "
-            "a wide range of topics including her job security, her mounting credit card debt, her "
-            "parents' health, and the possibility of getting into a car accident. She finds it "
-            "entirely impossible to control or set aside these worries. Accompanying this persistent "
-            "apprehension, she reports feeling constantly 'keyed up' and on edge, suffers from "
-            "chronic muscle tension in her neck and shoulders, and has severe insomnia, managing "
-            "only a few hours of restless sleep each night. Consequently, she is profoundly fatigued "
-            "and complains that her mind frequently 'goes blank'. She specifically notes having "
-            "trouble relaxing nearly every day, being so restless that it is hard to sit still "
-            "nearly every day, becoming easily annoyed or irritable nearly every day, and feeling "
-            "afraid, as if something awful might happen nearly every day. The severity of her "
-            "symptoms has caused marked functional impairment; her inability to concentrate and "
-            "constant exhaustion have made it impossible for her to do her job efficiently, resulting "
-            "in her recently being placed on a short-term disability leave."
+            "Ms. D is a 28-year-old woman who presents to her primary care clinic reporting a 12-month history "
+            "of excessive anxiety and worry occurring more days than not, focusing on a wide range of topics "
+            "including her job security, her mounting credit card debt, her parents' health, and the possibility "
+            "of getting into a car accident. She finds it difficult to control the worry. Accompanying this "
+            "apprehensive expectation, she reports experiencing several physical and cognitive symptoms: she feels "
+            "\"keyed up\" or on edge nearly every day, experiences muscle tension more days than not, and has sleep "
+            "disturbance nearly every day, managing only a few hours of restless sleep each night. Consequently, she "
+            "is easily fatigued nearly every day and complains of difficulty concentrating or that her mind goes blank "
+            "nearly every day. She specifically notes having trouble relaxing nearly every day, being so restless that "
+            "it is hard to sit still nearly every day, becoming easily annoyed or irritable nearly every day, and feeling "
+            "afraid, as if something awful might happen nearly every day. Her symptoms cause clinically significant "
+            "impairment in occupational functioning; her difficulty concentrating and fatigue have made it impossible "
+            "for her to do her job efficiently, resulting in her recently being placed on a short-term disability leave."
         ),
         "instruments": ["GAD7"],
         "ground_truth": {
-            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+            "GAD7": {1: 3, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3}
         },
         "expected_band": {"GAD7": "Severe (15–21)"},
     },
 
     "V5": {
         "patient": "Mr. E (50M)",
-        "condition": "MDD with anxious distress specifier, moderate",
+        "condition": "Comorbid MDD + GAD, moderate",
         "text_standard": (
-            "Mr. E is a 50-year-old man who meets the criteria for a major depressive episode, "
-            "presenting with a 6-week history of persistently depressed mood, a marked loss of "
-            "interest in his usual activities, hypersomnia, fatigue, and a diminished ability to "
-            "concentrate. While his symptoms cause him notable distress and affect his work "
-            "performance, his functional impairment is intermediate between mild and severe, "
-            "allowing him to still manage his daily obligations with some effort. Concurrently, "
-            "during the majority of days of this depressive episode, he reports exactly three "
-            "symptoms of anxious distress: he frequently feels keyed up and tense, is unusually "
-            "restless, and struggles with a pervasive fear that 'something awful may happen'. "
-            "Because he experiences exactly three of these specific anxiety symptoms, his anxious "
-            "distress is classified as moderate. "
-            "[Diagnosis: Major Depressive Disorder with anxious distress specifier, moderate]"
+            "Mr. E is a 50-year-old man who presents with a 6-week history of a major depressive episode, reporting "
+            "depressed mood on more than half the days, a loss of interest in his usual activities on more than half "
+            "the days, hypersomnia on more than half the days, fatigue on more than half the days, and a diminished "
+            "ability to concentrate on more than half the days. Concurrently, he reports a 6-month history of excessive "
+            "worry about his health and finances, occurring more days than not. He finds it difficult to control the "
+            "worry. His anxiety is accompanied by three physical and cognitive symptoms: he feels keyed up or on edge on "
+            "more than half the days, becomes easily annoyed or irritable on more than half the days, and experiences "
+            "muscle tension more days than not. While his symptoms cause clinically significant distress and affect his "
+            "work performance, his functional impairment is intermediate between mild and severe, allowing him to still "
+            "manage his daily obligations with some effort. His generalized anxiety is severe enough to warrant clinical "
+            "attention independently of his depressive symptoms. "
+            "[Diagnosis: Comorbid Major Depressive Disorder and Generalized Anxiety Disorder, moderate]"
         ),
         "text_label_removed": (
-            "Mr. E is a 50-year-old man presenting with a 6-week history of persistently depressed "
-            "mood, a marked loss of interest in his usual activities, hypersomnia, fatigue, and a "
-            "diminished ability to concentrate. While his symptoms cause him notable distress and "
-            "affect his work performance, his functional impairment is intermediate, allowing him "
-            "to still manage his daily obligations with some effort. Concurrently, during the "
-            "majority of days, he reports three additional symptoms: he frequently feels keyed up "
-            "and tense, is unusually restless, and struggles with a pervasive fear that 'something "
-            "awful may happen'."
+            "Mr. E is a 50-year-old man who presents with a 6-week history of a major depressive episode, reporting "
+            "depressed mood on more than half the days, a loss of interest in his usual activities on more than half "
+            "the days, hypersomnia on more than half the days, fatigue on more than half the days, and a diminished "
+            "ability to concentrate on more than half the days. Concurrently, he reports a 6-month history of excessive "
+            "worry about his health and finances, occurring more days than not. He finds it difficult to control the "
+            "worry. His anxiety is accompanied by three physical and cognitive symptoms: he feels keyed up or on edge on "
+            "more than half the days, becomes easily annoyed or irritable on more than half the days, and experiences "
+            "muscle tension more days than not. While his symptoms cause clinically significant distress and affect his "
+            "work performance, his functional impairment is intermediate between mild and severe, allowing him to still "
+            "manage his daily obligations with some effort. His generalized anxiety is severe enough to warrant clinical "
+            "attention independently of his depressive symptoms."
         ),
         "instruments": ["PHQ9", "GAD7"],
         "ground_truth": {
-            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
-                     6: None, 7: None, 8: None, 9: None},
-            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+            "PHQ9": {1: 2, 2: 2, 3: 2, 4: 2, 5: 0, 6: 0, 7: 2, 8: 0, 9: 0},
+            "GAD7": {1: 2, 2: 2, 3: 2, 4: 2, 5: 0, 6: 2, 7: 0}
         },
         "expected_band": {
             "PHQ9": "Moderate (10–14)",
-            "GAD7": "Moderate partial (3 specifier symptoms)"
+            "GAD7": "Moderate (10-14)"
         },
     },
 
@@ -271,39 +261,40 @@ VIGNETTES = {
         "patient": "Ms. F (39F)",
         "condition": "Comorbid MDD + GAD, both severe",
         "text_standard": (
-            "Ms. F is a 39-year-old woman who presents with a lifelong history of excessive, "
-            "uncontrollable worry regarding everyday events that occurs more days than not. Her "
-            "anxiety is accompanied by all six of the associated physical and cognitive symptoms: "
-            "she frequently feels restless and keyed up or on edge, is easily fatigued, struggles "
-            "with difficulty concentrating (her mind often goes blank), experiences frequent "
-            "irritability, suffers from chronic muscle tension, and reports significant sleep "
-            "disturbance. This chronic worry heavily impacts her daily functioning. Over the past "
-            "three weeks, she has additionally developed exactly five symptoms characteristic of a "
-            "major depressive episode present nearly every day: a pervasive sad and depressed mood, "
-            "markedly diminished interest or pleasure in her usual activities, a significant "
-            "decrease in appetite resulting in weight loss, profound fatigue/loss of energy, and "
-            "persistent feelings of worthlessness. Her generalized anxiety is severe enough to "
-            "warrant clinical attention independently of her new depressive symptoms. "
-            "[Diagnosis: Comorbid Major Depressive Disorder and Generalized Anxiety Disorder, both severe]"
+            "Ms. F is a 39-year-old woman who presents with a lifelong history of excessive, uncontrollable worry "
+            "(apprehensive expectation) regarding everyday events that occurs more days than not for at least 6 months. "
+            "Her anxiety is accompanied by all six of the DSM-5-TR associated physical and cognitive symptoms: she feels "
+            "restless and keyed up or on edge nearly every day, is easily fatigued nearly every day, struggles with "
+            "difficulty concentrating (her mind going blank) nearly every day, becomes easily annoyed or irritable "
+            "nearly every day, experiences muscle tension nearly every day, and reports sleep disturbance nearly every day. "
+            "This worry heavily impacts her daily functioning. Over the past three weeks, she has additionally developed "
+            "exactly five symptoms characteristic of a major depressive episode. She reports feeling down, depressed, or "
+            "hopeless most of the day, nearly every day; having little interest or pleasure in doing things nearly every day; "
+            "a decrease in appetite resulting in weight loss nearly every day; feeling tired or having little energy nearly "
+            "every day; and feeling bad about herself—or that she is a failure—nearly every day. Her generalized anxiety is "
+            "severe enough to warrant clinical attention independently of her new depressive symptoms, distinguishing it "
+            "from the anxiety that often temporarily accompanies depression. "
+            "[Diagnosis: Comorbid Major Depressive Disorder and Generalized Anxiety Disorder, severe]"
         ),
         "text_label_removed": (
-            "Ms. F is a 39-year-old woman who presents with a lifelong history of excessive, "
-            "uncontrollable worry regarding everyday events that occurs more days than not. Her "
-            "anxiety is accompanied by all six of the associated physical and cognitive symptoms: "
-            "she frequently feels restless and keyed up or on edge, is easily fatigued, struggles "
-            "with difficulty concentrating (her mind often goes blank), experiences frequent "
-            "irritability, suffers from chronic muscle tension, and reports significant sleep "
-            "disturbance. This chronic worry heavily impacts her daily functioning. Over the past "
-            "three weeks, she has additionally developed exactly five new symptoms present nearly "
-            "every day: a pervasive sad and depressed mood, markedly diminished interest or "
-            "pleasure in her usual activities, a significant decrease in appetite resulting in "
-            "weight loss, profound fatigue/loss of energy, and persistent feelings of worthlessness."
+            "Ms. F is a 39-year-old woman who presents with a lifelong history of excessive, uncontrollable worry "
+            "(apprehensive expectation) regarding everyday events that occurs more days than not for at least 6 months. "
+            "Her anxiety is accompanied by all six of the DSM-5-TR associated physical and cognitive symptoms: she feels "
+            "restless and keyed up or on edge nearly every day, is easily fatigued nearly every day, struggles with "
+            "difficulty concentrating (her mind going blank) nearly every day, becomes easily annoyed or irritable "
+            "nearly every day, experiences muscle tension nearly every day, and reports sleep disturbance nearly every day. "
+            "This worry heavily impacts her daily functioning. Over the past three weeks, she has additionally developed "
+            "exactly five symptoms characteristic of a major depressive episode. She reports feeling down, depressed, or "
+            "hopeless most of the day, nearly every day; having little interest or pleasure in doing things nearly every day; "
+            "a decrease in appetite resulting in weight loss nearly every day; feeling tired or having little energy nearly "
+            "every day; and feeling bad about herself—or that she is a failure—nearly every day. Her generalized anxiety is "
+            "severe enough to warrant clinical attention independently of her new depressive symptoms, distinguishing it "
+            "from the anxiety that often temporarily accompanies depression."
         ),
         "instruments": ["PHQ9", "GAD7"],
         "ground_truth": {
-            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
-                     6: None, 7: None, 8: None, 9: None},
-            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+            "PHQ9": {1: 3, 2: 3, 3: 0, 4: 3, 5: 3, 6: 3, 7: 0, 8: 0, 9: 0},
+            "GAD7": {1: 3, 2: 2, 3: 2, 4: 3, 5: 3, 6: 3, 7: 3}
         },
         "expected_band": {
             "PHQ9": "Moderate–severe (15+)",
@@ -315,28 +306,25 @@ VIGNETTES = {
         "patient": "Mr. G (28M)",
         "condition": "GAD, mild (contrast case)",
         "text_standard": (
-            "Mr. G is a 28-year-old man who presents with excessive, pervasive, and pronounced "
-            "worry about his work performance and his finances, occurring more days than not for "
-            "the past 6 months. He finds it nearly impossible to control the worry, which "
-            "frequently occurs without specific precipitants. His psychological distress is "
-            "accompanied by three physical symptoms: persistent restlessness, muscle tension, and "
-            "sleep disturbance. His symptoms cause him clinically significant distress, but he is "
-            "still able to exert enough effort to maintain his job performance, demonstrating a "
-            "mild, manageable level of impairment. "
-            "[Diagnosis: Generalized Anxiety Disorder, mild]"
+            "Mr. G is a 28-year-old man who presents with excessive worry about his work performance and his finances, "
+            "occurring more days than not for the past 6 months. He finds it difficult to control the worry, which occurs "
+            "without specific precipitants. His psychological distress is accompanied by three physical symptoms: "
+            "restlessness on several days, muscle tension more days than not, and sleep disturbance more days than not. "
+            "His symptoms cause him clinically significant distress, but he is still able to exert enough effort to "
+            "maintain his job performance, demonstrating a mild, manageable level of impairment. "
+            "He is diagnosed with Generalized Anxiety Disorder."
         ),
         "text_label_removed": (
-            "Mr. G is a 28-year-old man who presents with excessive, pervasive, and pronounced "
-            "worry about his work performance and his finances, occurring more days than not for "
-            "the past 6 months. He finds it nearly impossible to control the worry, which "
-            "frequently occurs without specific precipitants. His psychological distress is "
-            "accompanied by three physical symptoms: persistent restlessness, muscle tension, and "
-            "sleep disturbance. His symptoms cause him clinically significant distress, but he is "
-            "still able to exert enough effort to maintain his job performance."
+            "Mr. G is a 28-year-old man who presents with excessive worry about his work performance and his finances, "
+            "occurring more days than not for the past 6 months. He finds it difficult to control the worry, which occurs "
+            "without specific precipitants. His psychological distress is accompanied by three physical symptoms: "
+            "restlessness on several days, muscle tension more days than not, and sleep disturbance more days than not. "
+            "His symptoms cause him clinically significant distress, but he is still able to exert enough effort to "
+            "maintain his job performance, demonstrating a mild, manageable level of impairment."
         ),
         "instruments": ["GAD7"],
         "ground_truth": {
-            "GAD7": {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None}
+            "GAD7": {1: 0, 2: 2, 3: 2, 4: 0, 5: 1, 6: 0, 7: 0}
         },
         "expected_band": {"GAD7": "Mild (5–9)"},
     },
@@ -345,34 +333,30 @@ VIGNETTES = {
         "patient": "Ms. H (40F)",
         "condition": "MDD, mild (contrast case)",
         "text_standard": (
-            "Ms. H is a 40-year-old woman who presents to the clinic reporting that over the last "
-            "2 weeks, she has been bothered by feeling down, depressed, or hopeless on more than "
-            "half the days. Rather than a total inability to anticipate happiness, she notes having "
-            "little interest or pleasure in doing things on more than half the days. She also "
-            "reports feeling tired or having little energy on more than half the days. She "
-            "experiences trouble falling or staying asleep on several days, and has trouble "
-            "concentrating on things on several days. She experiences occasional rumination, "
-            "feeling bad about herself — or that she is a failure — on several days. Her symptoms "
-            "cause her clinically significant distress, but she only finds it 'somewhat difficult' "
-            "to do her work and take care of things at home, resulting in minor impairment. "
-            "[Diagnosis: Major Depressive Disorder, single episode, mild]"
+            "Ms. H is a 40-year-old woman who presents to the clinic reporting that over the last 2 weeks, she has been "
+            "bothered by feeling down, depressed, or hopeless on more than half the days. Rather than an inability to "
+            "anticipate happiness, she notes having little interest or pleasure in doing things on more than half the days. "
+            "She also reports feeling tired or having little energy on more than half the days. She experiences trouble "
+            "falling or staying asleep on several days, and has trouble concentrating on things on several days. Instead "
+            "of being consumed by self-loathing, she experiences rumination, feeling bad about herself—or that she is a "
+            "failure—on several days. Her symptoms cause her clinically significant distress, but she only finds it "
+            "\"somewhat difficult\" to do her work and take care of things at home, resulting in minor impairment. "
+            "Because her symptoms result in only minor impairment and her overall symptom burden is low, her diagnosis "
+            "is specified clinically as Major Depressive Disorder, single episode, mild."
         ),
         "text_label_removed": (
-            "Ms. H is a 40-year-old woman who presents to the clinic reporting that over the last "
-            "2 weeks, she has been bothered by feeling down, depressed, or hopeless on more than "
-            "half the days. Rather than a total inability to anticipate happiness, she notes having "
-            "little interest or pleasure in doing things on more than half the days. She also "
-            "reports feeling tired or having little energy on more than half the days. She "
-            "experiences trouble falling or staying asleep on several days, and has trouble "
-            "concentrating on things on several days. She experiences occasional rumination, "
-            "feeling bad about herself — or that she is a failure — on several days. Her symptoms "
-            "cause her clinically significant distress, but she only finds it 'somewhat difficult' "
-            "to do her work and take care of things at home, resulting in minor impairment."
+            "Ms. H is a 40-year-old woman who presents to the clinic reporting that over the last 2 weeks, she has been "
+            "bothered by feeling down, depressed, or hopeless on more than half the days. Rather than an inability to "
+            "anticipate happiness, she notes having little interest or pleasure in doing things on more than half the days. "
+            "She also reports feeling tired or having little energy on more than half the days. She experiences trouble "
+            "falling or staying asleep on several days, and has trouble concentrating on things on several days. Instead "
+            "of being consumed by self-loathing, she experiences rumination, feeling bad about herself—or that she is a "
+            "failure—on several days. Her symptoms cause her clinically significant distress, but she only finds it "
+            "\"somewhat difficult\" to do her work and take care of things at home, resulting in minor impairment."
         ),
         "instruments": ["PHQ9"],
         "ground_truth": {
-            "PHQ9": {1: None, 2: None, 3: None, 4: None, 5: None,
-                     6: None, 7: None, 8: None, 9: None}
+            "PHQ9": {1: 2, 2: 2, 3: 1, 4: 2, 5: 0, 6: 1, 7: 1, 8: 0, 9: 0}
         },
         "expected_band": {"PHQ9": "Mild (5–9)"},
     },
@@ -555,7 +539,7 @@ def run_experiment(
 
                                     parsed_score = parse_score(raw_response)
 
-                                gt_score  = gt_scores.get(item_num)   # None until you fill in
+                                gt_score  = gt_scores.get(item_num)
                                 deviation = (
                                     abs(parsed_score - gt_score)
                                     if parsed_score is not None and gt_score is not None
