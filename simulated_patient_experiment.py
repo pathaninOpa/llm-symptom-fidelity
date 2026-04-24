@@ -2,7 +2,10 @@
 LLM Symptom Fidelity Experiment
 ================================
 Study: "Testing the Simulated Patient: PHQ-9 and GAD-7 Fidelity in LLM-Driven Mental Health Personas"
-Author: Tae (JAIST KnowLab)
+Author: 
+- Pathanin Opachalearn, Mahidol University, pathanin.opa@student.mahidol.ac.th
+- Konlakorn Wongpatikaseree, Mahidol University, konlakorn.won@mahidol.ac.th
+- Natthawut Kertkeidkachorn, Japan Advanced Institute of Science and Technology, natt@jaist.ac.jp
 
 Experiment parameters:
   - Models: GPT-4o (OpenAI), Llama 3.3 - 70b versatile (Groq)
@@ -19,7 +22,7 @@ Usage:
   python experiment.py
 
 Output:
-  results.csv  — one row per item response (96 trials × ~8 items avg = ~768 rows)
+  results.csv  — one row per item response (96 trials × 10 items = 960 rows)
 """
 
 import os
