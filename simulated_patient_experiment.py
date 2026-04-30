@@ -1,7 +1,7 @@
 """
 LLM Symptom Fidelity Experiment
 ================================
-Study: "Testing the Simulated Patient: PHQ-9 and GAD-7 Fidelity in LLM-Driven Mental Health Personas"
+Study: "Evaluating Symptom Fidelity in LLM-Driven Simulated Patients Using PHQ-9 and GAD-7"
 Author: Anonymous Submission
 
 Experiment parameters:
